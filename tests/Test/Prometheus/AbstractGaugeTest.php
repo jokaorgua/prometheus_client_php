@@ -3,7 +3,7 @@
 
 namespace Test\Prometheus;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use Prometheus\Gauge;
 use Prometheus\MetricFamilySamples;
 use Prometheus\Storage\Adapter;
@@ -11,7 +11,7 @@ use Prometheus\Storage\Adapter;
 /**
  * See https://prometheus.io/docs/instrumenting/exposition_formats/
  */
-abstract class AbstractGaugeTest extends PHPUnit_Framework_TestCase
+abstract class AbstractGaugeTest extends TestCase
 {
     /**
      * @var Adapter

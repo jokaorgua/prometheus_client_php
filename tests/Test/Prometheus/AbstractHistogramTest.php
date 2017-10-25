@@ -7,12 +7,13 @@ use PHPUnit_Framework_TestCase;
 use Prometheus\Histogram;
 use Prometheus\MetricFamilySamples;
 use Prometheus\Storage\Adapter;
+use PHPUnit\Framework\TestCase;
 
 
 /**
  * See https://prometheus.io/docs/instrumenting/exposition_formats/
  */
-abstract class AbstractHistogramTest extends PHPUnit_Framework_TestCase
+abstract class AbstractHistogramTest extends TestCase
 {
     /**
      * @var Adapter
