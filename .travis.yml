@@ -6,7 +6,8 @@ services:
   - redis-server
 
 before_script:
-  - apt-get install php7.0-apcu
+  - sudo add-apt-repository -y ppa:ondrej/php
+  - sudo apt-get install php7.0-apcu
   - echo "apc.enabled = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
