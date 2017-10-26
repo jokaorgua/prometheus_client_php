@@ -4,6 +4,8 @@
 namespace Prometheus\Storage;
 
 
+use APCIterator;
+use APCUIterator;
 use Prometheus\MetricFamilySamples;
 
 class APC implements Adapter
@@ -85,7 +87,7 @@ class APC implements Adapter
 
     public function flushAPC()
     {
-       apc_clear_cache('user');
+        apc_clear_cache('user');
     }
 
     /**
@@ -103,7 +105,8 @@ class APC implements Adapter
      */
     private function valueKey(array $data)
     {
-        return implode(':', array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), 'value'));
+        return implode(':',
+            array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), 'value'));
     }
 
     /**
@@ -112,7 +115,14 @@ class APC implements Adapter
      */
     private function histogramBucketValueKey(array $data, $bucket)
     {
-        return implode(':', array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), $bucket, 'value'));
+        return implode(':', array(
+            self::PROMETHEUS_PREFIX,
+            $data['type'],
+            $data['name'],
+            json_encode($data['labelValues']),
+            $bucket,
+            'value'
+        ));
     }
 
     /**
@@ -134,7 +144,11 @@ class APC implements Adapter
     private function collectCounters()
     {
         $counters = array();
-        foreach (new \APCIterator('user', '/^prom:counter:.*:meta/') as $counter) {
+        $usedMetaKeys = [];
+        foreach (new APCIterator('user', '/^prom:counter:.*:meta/') as $counter) {
+            if (in_array($counter['key'], $usedMetaKeys)) {
+                continue;
+            }
             $metaData = json_decode($counter['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -159,12 +173,16 @@ class APC implements Adapter
     }
 
     /**
- * @return array
- */
+     * @return array
+     */
     private function collectGauges()
     {
         $gauges = array();
-        foreach (new \APCIterator('user', '/^prom:gauge:.*:meta/') as $gauge) {
+        $usedMetaKeys = [];
+        foreach (new APCIterator('user', '/^prom:gauge:.*:meta/') as $gauge) {
+            if (in_array($gauge['key'], $usedMetaKeys)) {
+                continue;
+            }
             $metaData = json_decode($gauge['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -195,7 +213,11 @@ class APC implements Adapter
     private function collectHistograms()
     {
         $histograms = array();
-        foreach (new \APCIterator('user', '/^prom:histogram:.*:meta/') as $histogram) {
+        $usedMetaKeys = [];
+        foreach (new APCIterator('user', '/^prom:histogram:.*:meta/') as $histogram) {
+            if (in_array($histogram['key'], $usedMetaKeys)) {
+                continue;
+            }
             $metaData = json_decode($histogram['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -224,7 +246,7 @@ class APC implements Adapter
                 $acc = 0;
                 $decodedLabelValues = json_decode($labelValues);
                 foreach ($data['buckets'] as $bucket) {
-                    $bucket = (string) $bucket;
+                    $bucket = (string)$bucket;
                     if (!isset($histogramBuckets[$labelValues][$bucket])) {
                         $data['samples'][] = array(
                             'name' => $metaData['name'] . '_bucket',
@@ -285,7 +307,7 @@ class APC implements Adapter
 
     private function sortSamples(array &$samples)
     {
-        usort($samples, function($a, $b){
+        usort($samples, function ($a, $b) {
             return strcmp(implode("", $a['labelValues']), implode("", $b['labelValues']));
         });
     }

@@ -86,7 +86,7 @@ class APCU implements Adapter
 
     public function flushAPC()
     {
-       apcu_clear_cache();
+        apcu_clear_cache();
     }
 
     /**
@@ -104,7 +104,8 @@ class APCU implements Adapter
      */
     private function valueKey(array $data)
     {
-        return implode(':', array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), 'value'));
+        return implode(':',
+            array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), 'value'));
     }
 
     /**
@@ -113,7 +114,14 @@ class APCU implements Adapter
      */
     private function histogramBucketValueKey(array $data, $bucket)
     {
-        return implode(':', array(self::PROMETHEUS_PREFIX, $data['type'], $data['name'], json_encode($data['labelValues']), $bucket, 'value'));
+        return implode(':', array(
+            self::PROMETHEUS_PREFIX,
+            $data['type'],
+            $data['name'],
+            json_encode($data['labelValues']),
+            $bucket,
+            'value'
+        ));
     }
 
     /**
@@ -135,7 +143,12 @@ class APCU implements Adapter
     private function collectCounters()
     {
         $counters = array();
+        $usedMetaKeys = [];
         foreach (new APCUIterator('/^prom:counter:.*:meta/') as $counter) {
+            if (in_array($counter['key'], $usedMetaKeys)) {
+                continue;
+            }
+            $usedMetaKeys[] = $counter['key'];
             $metaData = json_decode($counter['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -160,12 +173,17 @@ class APCU implements Adapter
     }
 
     /**
- * @return array
- */
+     * @return array
+     */
     private function collectGauges()
     {
         $gauges = array();
+        $usedMetaKeys = [];
         foreach (new APCUIterator('/^prom:gauge:.*:meta/') as $gauge) {
+            if (in_array($gauge['key'], $usedMetaKeys)) {
+                continue;
+            }
+            $usedMetaKeys[] = $gauge['key'];
             $metaData = json_decode($gauge['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -196,7 +214,11 @@ class APCU implements Adapter
     private function collectHistograms()
     {
         $histograms = array();
+        $usedMetaKeys = [];
         foreach (new APCUIterator('/^prom:histogram:.*:meta/') as $histogram) {
+            if (in_array($histogram['key'], $usedMetaKeys)) {
+                continue;
+            }
             $metaData = json_decode($histogram['value'], true);
             $data = array(
                 'name' => $metaData['name'],
@@ -225,7 +247,7 @@ class APCU implements Adapter
                 $acc = 0;
                 $decodedLabelValues = json_decode($labelValues);
                 foreach ($data['buckets'] as $bucket) {
-                    $bucket = (string) $bucket;
+                    $bucket = (string)$bucket;
                     if (!isset($histogramBuckets[$labelValues][$bucket])) {
                         $data['samples'][] = array(
                             'name' => $metaData['name'] . '_bucket',
@@ -286,7 +308,7 @@ class APCU implements Adapter
 
     private function sortSamples(array &$samples)
     {
-        usort($samples, function($a, $b){
+        usort($samples, function ($a, $b) {
             return strcmp(implode("", $a['labelValues']), implode("", $b['labelValues']));
         });
     }
