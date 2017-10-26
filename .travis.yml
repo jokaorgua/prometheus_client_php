@@ -1,15 +1,17 @@
 language: php
 php:
-  - 7.0.24
+  - 7.0.22
 
 services:
   - redis-server
 
 before_script:
-  - echo yes | pecl install -f apcu-4.0.11
+  - apt-get install php7.0-apcu
   - echo "apc.enabled = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "apc.enable_cli = 1" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "extension = apcu.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "extension = apc.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - composer self-update
   - composer install --no-interaction --prefer-source --dev
   - phpenv rehash
